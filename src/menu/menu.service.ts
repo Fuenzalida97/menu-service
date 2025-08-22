@@ -38,14 +38,40 @@ export class MenuService {
   //   );
   // }
 
-  async findAll(): Promise<MenuItem[]> {
-    return this.menuItemModel.find().exec();
+  async findAll(
+    page = 1,
+    limit = 10,
+    category?: string,
+    search?: string,
+  ): Promise<{ data: MenuItem[]; total: number; page: number; limit: number }> {
+    const skip = (page - 1) * limit;
+    const query: any = {};
+
+    // 1. Lógica de Filtro
+    if (category) {
+      query.category = category;
+    }
+
+    // 2. Lógica de Búsqueda
+    if (search) {
+      // Usamos una expresión regular para buscar de forma insensible a mayúsculas/minúsculas
+      const searchRegex = new RegExp(search, 'i');
+      // $or permite buscar en múltiples campos a la vez
+      query.$or = [{ name: searchRegex }, { description: searchRegex }];
+    }
+
+    const [data, total] = await Promise.all([
+      this.menuItemModel.find(query).skip(skip).limit(limit).exec(),
+      this.menuItemModel.countDocuments(query).exec(),
+    ]);
+
+    return { data, total, page, limit };
   }
 
   async findOne(id: string): Promise<MenuItem> {
     const item = await this.menuItemModel.findById(id).exec();
     if (!item) {
-      throw new NotFoundException(`Menu item with ID "${id}" not found`);
+      throw new NotFoundException(`Item del menú con ID "${id}" no encontrado`);
     }
     return item;
   }
@@ -58,16 +84,16 @@ export class MenuService {
       .findByIdAndUpdate(id, updateMenuItemDto, { new: true })
       .exec();
     if (!updatedItem) {
-      throw new NotFoundException(`Menu item with ID "${id}" not found`);
+      throw new NotFoundException(`Item del menú con ID "${id}" no encontrado`);
     }
     return updatedItem;
   }
 
-  async remove(id: string): Promise<any> {
+  async remove(id: string): Promise<{ message: string }> {
     const result = await this.menuItemModel.findByIdAndDelete(id).exec();
     if (!result) {
-      throw new NotFoundException(`Menu item with ID "${id}" not found`);
+      throw new NotFoundException(`Item del menú con ID "${id}" no encontrado`);
     }
-    return { message: `Menu item with ID "${id}" deleted successfully` };
+    return { message: `Item del menú con ID "${id}" eliminado correctamente` };
   }
 }

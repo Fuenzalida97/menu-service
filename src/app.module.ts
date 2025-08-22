@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MenuModule } from './menu/menu.module';
-import { MenuModule } from './menu/menu.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -10,7 +9,7 @@ import { MenuModule } from './menu/menu.module';
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule], // Importa ConfigModule para poder inyectar ConfigService
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('MONGO_URI'), // Lee la URI desde las variables de entorno
         // aquí puedes añadir más opciones de conexión si las necesitas
       }),
